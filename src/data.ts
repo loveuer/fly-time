@@ -1,4 +1,4 @@
-export type GameId = 'minesweeper' | 'solitaire' | 'sudoku'
+export type GameId = 'minesweeper' | 'solitaire' | 'sudoku' | 'nonogram'
 
 export type GameMeta = {
   id: GameId
@@ -45,6 +45,17 @@ export const games: GameMeta[] = [
     category: '专注',
     difficulty: '中等',
     time: '10–20 分钟',
+  },
+  {
+    id: 'nonogram',
+    title: '数织',
+    subtitle: '像素谜题',
+    description: '从数字里，拼出一幅小画。',
+    icon: '▥',
+    color: 'blue',
+    category: '动脑',
+    difficulty: '入门',
+    time: '5–15 分钟',
   },
 ]
 

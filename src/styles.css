@@ -98,3 +98,36 @@ h1, h2, h3, p { margin: 0; }
 .playing-card.red-card { color: #e05252; }
 @media (min-width: 540px) { .main-content { padding-left: 28px; padding-right: 28px; }.game-screen { padding-left: 28px; padding-right: 28px; } }
 @media (max-width: 370px) { .main-content { padding-left: 16px; padding-right: 16px; }.solitaire-top { grid-template-columns: 43px 43px 1fr; gap: 6px; }.card-slot { width: 43px; height: 60px; }.foundation { width: 37px; height: 52px; }.foundation-row { gap: 3px; }.tableau { gap: 3px; }.playing-card { padding: 3px; font-size: 10px; } }
+
+.game-card.blue { background: #a8c4ff; }
+.recent-icon.blue, .game-header-icon.blue { background: #a8c4ff; }
+.home-grid .game-card:nth-child(4) { grid-column: span 2; min-height: 180px; }
+
+.nonogram-puzzle-tabs { display: flex; gap: 7px; margin: -2px 0 16px; overflow-x: auto; scrollbar-width: none; }
+.nonogram-puzzle-tabs::-webkit-scrollbar { display: none; }
+.nonogram-puzzle-tabs button { flex: 1; min-width: 78px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 9px; background: #111a31; color: var(--muted); font-size: 10px; white-space: nowrap; }
+.nonogram-puzzle-tabs button span { font-family: var(--mono); color: #687391; margin-right: 5px; font-size: 9px; }
+.nonogram-puzzle-tabs button.active { border-color: rgba(255,209,102,.45); background: rgba(255,209,102,.1); color: var(--yellow); }
+.nonogram-puzzle-tabs button.active span { color: var(--yellow); }
+.nonogram-meta { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 3px 9px; color: var(--muted); font-family: var(--mono); font-size: 9px; }
+.nonogram-meta b { color: var(--soft); font-weight: 400; }
+.nonogram-board { --nonogram-size: 7; display: grid; grid-template-columns: 44px repeat(var(--nonogram-size), minmax(0, 1fr)); gap: 1px; padding: 1px; overflow: hidden; border-radius: 9px; background: #53678f; }
+.nonogram-corner, .nonogram-col-clue, .nonogram-row-clue { background: #111a31; color: #a8b4d3; }
+.nonogram-corner { display: grid; place-items: center; color: #53678f; font-family: var(--mono); font-size: 15px; }
+.nonogram-col-clue { min-height: 62px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 1px; padding-bottom: 7px; font-family: var(--mono); font-size: 10px; }
+.nonogram-row-group { display: contents; }
+.nonogram-row-clue { display: flex; align-items: center; justify-content: flex-end; gap: 4px; padding-right: 8px; font-family: var(--mono); font-size: 10px; }
+.nonogram-col-clue.solved, .nonogram-row-clue.solved { color: #71e0b8; }
+.nonogram-cell { aspect-ratio: 1; min-width: 0; background: #1b2a4e; color: #18213e; display: grid; place-items: center; font-family: var(--mono); font-size: clamp(11px, 4vw, 17px); transition: background .12s, transform .12s; }
+.nonogram-cell:active { transform: scale(.9); }
+.nonogram-cell.filled { background: var(--yellow); color: #16203b; }
+.nonogram-cell.cross { background: #172443; color: #7284ff; font-size: clamp(16px, 5vw, 23px); }
+.nonogram-cell.block-right { border-right: 2px solid #53678f; }
+.nonogram-cell.block-bottom { border-bottom: 2px solid #53678f; }
+.nonogram-mode { margin-top: 14px; width: 210px; }
+.nonogram-tip { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; padding: 12px 13px; border-radius: 10px; background: rgba(114,132,255,.08); border: 1px solid rgba(114,132,255,.15); color: var(--muted); font-size: 10px; line-height: 1.65; }
+.nonogram-tip > span { flex: 0 0 17px; height: 17px; display: grid; place-items: center; border: 1px solid #7284ff; border-radius: 50%; color: #7284ff; font-family: var(--mono); font-size: 9px; }
+.nonogram-tip strong { color: var(--soft); font-weight: 500; }
+.nonogram-panel .game-actions { margin-top: 2px; }
+
+@media (max-width: 370px) { .nonogram-board { grid-template-columns: 38px repeat(var(--nonogram-size), minmax(0, 1fr)); }.nonogram-col-clue { min-height: 55px; }.nonogram-row-clue { padding-right: 5px; gap: 2px; } }
