@@ -211,20 +211,31 @@ function Sudoku() {
   const [board, setBoard] = useState(sudokuPuzzle)
   const [selected, setSelected] = useState<number | null>(null)
   const [mistakes, setMistakes] = useState(0)
+  const [wrongCells, setWrongCells] = useState<number[]>([])
   const [complete, setComplete] = useState(false)
-  const reset = () => { setBoard(sudokuPuzzle); setSelected(null); setMistakes(0); setComplete(false) }
+  const reset = () => { setBoard(sudokuPuzzle); setSelected(null); setMistakes(0); setWrongCells([]); setComplete(false) }
   const setNumber = (number: number) => {
     if (selected === null || sudokuPuzzle[selected] !== 0 || complete) return
-    if (number !== sudokuSolution[selected]) { setMistakes((count) => count + 1); return }
-    setBoard((previous) => {
-      const next = [...previous]
-      next[selected] = number
-      if (next.every((value) => value !== 0)) setComplete(true)
-      return next
-    })
+    const next = [...board]
+    next[selected] = number
+    const isFull = next.every((value) => value !== 0)
+    if (isFull) {
+      const incorrect = next.reduce<number[]>((cells, value, index) => {
+        if (value !== sudokuSolution[index]) cells.push(index)
+        return cells
+      }, [])
+      setWrongCells(incorrect)
+      setMistakes(incorrect.length)
+      setComplete(incorrect.length === 0)
+    } else {
+      setWrongCells([])
+      setMistakes(0)
+      setComplete(false)
+    }
+    setBoard(next)
   }
   const activeNumber = selected === null ? null : board[selected]
-  return <section className="game-panel sudoku-panel"><div className="game-intro"><span className="section-kicker">SUDOKU · EASY</span><h1>给数字，<em>一点秩序。</em></h1><p>点击空格，再选择下方的数字。慢慢来，不着急。</p></div><div className="sudoku-meta"><span>错误 <b>{mistakes}/3</b></span><span className={complete ? 'complete-label' : ''}>{complete ? '完成啦 ✦' : '进行中 · 还剩 ' + board.filter((value) => value === 0).length + ' 格'}</span></div><div className="sudoku-board">{board.map((value, index) => <button key={index} className={`sudoku-cell ${sudokuPuzzle[index] ? 'given' : 'editable'} ${selected === index ? 'selected' : ''} ${activeNumber && value === activeNumber ? 'same-number' : ''} ${Math.floor(index / 9) % 3 === 2 ? 'block-bottom' : ''} ${index % 9 % 3 === 2 ? 'block-right' : ''}`} onClick={() => setSelected(index)}>{value || ''}</button>)}</div><div className="number-pad">{[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => <button key={number} className={activeNumber === number ? 'active' : ''} onClick={() => setNumber(number)}>{number}</button>)}<button className="erase" onClick={() => { if (selected !== null && !sudokuPuzzle[selected]) setBoard((prev) => prev.map((value, index) => index === selected ? 0 : value)) }}>⌫</button></div><div className="game-actions"><button onClick={reset}><Icon name="refresh" />重新开始</button><span>已自动保存当前进度</span></div>{complete && <div className="result-banner mint-result"><strong>一格不差，落地前刚好完成。</strong><button onClick={reset}>再来一盘 →</button></div>}</section>
+  return <section className="game-panel sudoku-panel"><div className="game-intro"><span className="section-kicker">SUDOKU · EASY</span><h1>给数字，<em>一点秩序。</em></h1><p>点击空格，再选择下方的数字。全部填完后会自动验证。</p></div><div className="sudoku-meta"><span>错误格 <b>{mistakes}</b></span><span className={complete ? 'complete-label' : ''}>{complete ? '完成啦 ✦' : wrongCells.length ? `已填满 · 有 ${wrongCells.length} 格待修正` : '进行中 · 还剩 ' + board.filter((value) => value === 0).length + ' 格'}</span></div><div className="sudoku-board">{board.map((value, index) => <button key={index} className={`sudoku-cell ${sudokuPuzzle[index] ? 'given' : 'editable'} ${selected === index ? 'selected' : ''} ${activeNumber && value === activeNumber ? 'same-number' : ''} ${wrongCells.includes(index) ? 'wrong' : ''} ${Math.floor(index / 9) % 3 === 2 ? 'block-bottom' : ''} ${index % 9 % 3 === 2 ? 'block-right' : ''}`} onClick={() => setSelected(index)}>{value || ''}</button>)}</div><div className="number-pad">{[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => <button key={number} className={activeNumber === number ? 'active' : ''} onClick={() => setNumber(number)}>{number}</button>)}<button className="erase" onClick={() => { if (selected !== null && !sudokuPuzzle[selected]) { setBoard((prev) => prev.map((value, index) => index === selected ? 0 : value)); setWrongCells([]); setMistakes(0); setComplete(false) } }}>⌫</button></div><div className="game-actions"><button onClick={reset}><Icon name="refresh" />重新开始</button><span>已自动保存当前进度</span></div>{wrongCells.length > 0 && !complete && <div className="sudoku-warning"><strong>再检查一下，有 {wrongCells.length} 格不太对。</strong><span>红色格子需要改正</span></div>}{complete && <div className="result-banner mint-result"><strong>一格不差，落地前刚好完成。</strong><button onClick={reset}>再来一盘 →</button></div>}</section>
 }
 
 function Nonogram() {
