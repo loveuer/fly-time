@@ -1,0 +1,13 @@
+{
+  "name": "Fly Time · 离线游戏舱",
+  "short_name": "Fly Time",
+  "description": "没有网络，也有好玩的事。",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a1021",
+  "theme_color": "#0a1021",
+  "lang": "zh-CN",
+  "icons": [
+    { "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
