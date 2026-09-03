@@ -129,39 +129,59 @@ function GameScreen({ id, onBack }: { id: GameId; onBack: () => void }) {
 }
 
 type MineCell = { mine: boolean; open: boolean; flagged: boolean; adjacent: number }
-const mineSize = 9
-const mineCount = 10
+type MineDifficulty = 'easy' | 'middle' | 'hard'
+type MineDifficultyOption = { id: MineDifficulty; label: string; size: number; mines: number }
 
-function makeMines(): MineCell[] {
-  const cells = Array.from({ length: mineSize * mineSize }, () => ({ mine: false, open: false, flagged: false, adjacent: 0 }))
-  const positions = Array.from({ length: cells.length }, (_, index) => index).sort(() => Math.random() - 0.5).slice(0, mineCount)
-  positions.forEach((index) => { cells[index].mine = true })
+const mineDifficultyOptions: MineDifficultyOption[] = [
+  { id: 'easy', label: '简单', size: 9, mines: 10 },
+  { id: 'middle', label: '中等', size: 12, mines: 24 },
+  { id: 'hard', label: '困难', size: 16, mines: 48 },
+]
+
+const getMineConfig = (difficulty: MineDifficulty) => mineDifficultyOptions.find((option) => option.id === difficulty)!
+
+const randomizeIndexes = (length: number) => {
+  const indexes = Array.from({ length }, (_, index) => index)
+  for (let index = indexes.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1))
+    ;[indexes[index], indexes[swapIndex]] = [indexes[swapIndex], indexes[index]]
+  }
+  return indexes
+}
+
+function makeMines(size: number, mineCount: number): MineCell[] {
+  const cells = Array.from({ length: size * size }, () => ({ mine: false, open: false, flagged: false, adjacent: 0 }))
+  randomizeIndexes(cells.length).slice(0, mineCount).forEach((index) => { cells[index].mine = true })
   cells.forEach((cell, index) => {
     if (cell.mine) return
-    cell.adjacent = around(index).filter((next) => cells[next].mine).length
+    cell.adjacent = around(index, size).filter((next) => cells[next].mine).length
   })
   return cells
 }
 
-function around(index: number) {
-  const row = Math.floor(index / mineSize)
-  const column = index % mineSize
+function around(index: number, size: number) {
+  const row = Math.floor(index / size)
+  const column = index % size
   const indexes: number[] = []
   for (let y = -1; y <= 1; y += 1) for (let x = -1; x <= 1; x += 1) {
     if (!x && !y) continue
     const nextRow = row + y
     const nextColumn = column + x
-    if (nextRow >= 0 && nextRow < mineSize && nextColumn >= 0 && nextColumn < mineSize) indexes.push(nextRow * mineSize + nextColumn)
+    if (nextRow >= 0 && nextRow < size && nextColumn >= 0 && nextColumn < size) indexes.push(nextRow * size + nextColumn)
   }
   return indexes
 }
 
 function Minesweeper() {
-  const [board, setBoard] = useState(makeMines)
+  const [difficulty, setDifficulty] = useState<MineDifficulty>('easy')
+  const [board, setBoard] = useState(() => makeMines(getMineConfig('easy').size, getMineConfig('easy').mines))
   const [status, setStatus] = useState<'playing' | 'won' | 'lost'>('playing')
   const [flagMode, setFlagMode] = useState(false)
   const [startedAt, setStartedAt] = useState(Date.now())
   const [, setClock] = useState(0)
+  const config = getMineConfig(difficulty)
+  const size = config.size
+  const mineCount = config.mines
   const flags = board.filter((cell) => cell.flagged).length
 
   useEffect(() => {
@@ -170,7 +190,14 @@ function Minesweeper() {
     return () => window.clearInterval(timer)
   }, [status])
 
-  const reset = () => { setBoard(makeMines()); setStatus('playing'); setStartedAt(Date.now()) }
+  const reset = (nextDifficulty: MineDifficulty = difficulty) => {
+    const nextConfig = getMineConfig(nextDifficulty)
+    setDifficulty(nextDifficulty)
+    setBoard(makeMines(nextConfig.size, nextConfig.mines))
+    setStatus('playing')
+    setFlagMode(false)
+    setStartedAt(Date.now())
+  }
   const reveal = (index: number) => {
     if (status !== 'playing') return
     if (flagMode) { toggleFlag(index); return }
@@ -189,7 +216,7 @@ function Minesweeper() {
         if (visited.has(current) || next[current].flagged) continue
         visited.add(current)
         next[current].open = true
-        if (next[current].adjacent === 0) around(current).forEach((near) => { if (!next[near].mine) queue.push(near) })
+        if (next[current].adjacent === 0) around(current, size).forEach((near) => { if (!next[near].mine) queue.push(near) })
       }
       if (next.every((cell) => cell.mine || cell.open)) setStatus('won')
       return next
@@ -197,11 +224,15 @@ function Minesweeper() {
   }
   const toggleFlag = (index: number) => {
     if (status !== 'playing') return
-    setBoard((previous) => previous.map((cell, cellIndex) => cellIndex === index && !cell.open ? { ...cell, flagged: !cell.flagged } : cell))
+    setBoard((previous) => previous.map((cell, cellIndex) => {
+      if (cellIndex !== index || cell.open) return cell
+      if (!cell.flagged && flags >= mineCount) return cell
+      return { ...cell, flagged: !cell.flagged }
+    }))
   }
   const elapsed = Math.max(0, Math.floor((Date.now() - startedAt) / 1000))
 
-  return <section className="game-panel mines-panel"><div className="game-intro"><span className="section-kicker">MINESWEEPER · BEGINNER</span><h1>保持冷静，<em>找到出口。</em></h1><p>点击安全的格子，数字告诉你附近有几颗雷。</p></div><div className="mine-toolbar"><div><small>地雷</small><strong>{String(mineCount - flags).padStart(2, '0')}</strong></div><div className={`game-status ${status}`}>{status === 'playing' ? '进行中' : status === 'won' ? '完成啦' : '踩雷了'}</div><div><small>时间</small><strong>{String(elapsed).padStart(3, '0')}</strong></div></div><div className="mine-board" role="grid">{board.map((cell, index) => <button key={index} className={`mine-cell ${cell.open ? 'open' : ''} ${cell.flagged ? 'flagged' : ''} n${cell.adjacent}`} onClick={() => reveal(index)} onContextMenu={(event) => { event.preventDefault(); toggleFlag(index) }} aria-label={`第 ${index + 1} 格`}>{cell.open ? cell.mine ? '✦' : cell.adjacent || '' : cell.flagged ? '⚑' : ''}</button>)}</div><div className="mode-toggle"><button className={!flagMode ? 'selected' : ''} onClick={() => setFlagMode(false)}>⌁ 挖掘</button><button className={flagMode ? 'selected' : ''} onClick={() => setFlagMode(true)}>⚑ 标记</button></div><div className="game-actions"><button onClick={reset}><Icon name="refresh" />重新开始</button><span>长按或右键可以标记地雷</span></div>{status !== 'playing' && <div className="result-banner"><strong>{status === 'won' ? '漂亮！航线安全。' : '差一点，再来一局？'}</strong><button onClick={reset}>再玩一次 →</button></div>}</section>
+  return <section className="game-panel mines-panel"><div className="game-intro"><span className="section-kicker">MINESWEEPER · {difficulty.toUpperCase()}</span><h1>保持冷静，<em>找到出口。</em></h1><p>随机生成 {size}×{size} 棋盘，找到全部 {mineCount} 颗雷。</p></div><div className="mine-difficulty">{mineDifficultyOptions.map((option) => <button key={option.id} className={difficulty === option.id ? 'active' : ''} onClick={() => reset(option.id)}><strong>{option.label}</strong><small>{option.id}</small></button>)}</div><div className="mine-toolbar"><div><small>剩余地雷</small><strong>{String(Math.max(0, mineCount - flags)).padStart(2, '0')}</strong></div><div className={`game-status ${status}`}>{status === 'playing' ? '进行中' : status === 'won' ? '完成啦' : '踩雷了'}</div><div><small>时间</small><strong>{String(elapsed).padStart(3, '0')}</strong></div></div><div className="mine-board" role="grid" style={{ '--mine-size': size } as CSSProperties}>{board.map((cell, index) => <button key={index} className={`mine-cell ${cell.open ? 'open' : ''} ${cell.flagged ? 'flagged' : ''} n${cell.adjacent}`} onClick={() => reveal(index)} onContextMenu={(event) => { event.preventDefault(); toggleFlag(index) }} aria-label={`第 ${index + 1} 格`}>{cell.open ? cell.mine ? '✦' : cell.adjacent || '' : cell.flagged ? '⚑' : ''}</button>)}</div><div className="mode-toggle"><button className={!flagMode ? 'selected' : ''} onClick={() => setFlagMode(false)}>⌁ 挖掘</button><button className={flagMode ? 'selected' : ''} onClick={() => setFlagMode(true)}>⚑ 标记</button></div><div className="game-actions"><button onClick={() => reset()}><Icon name="refresh" />随机新局</button><span>长按或右键可以标记地雷</span></div>{status !== 'playing' && <div className="result-banner"><strong>{status === 'won' ? '漂亮！航线安全。' : '差一点，再来一局？'}</strong><button onClick={() => reset()}>再玩一次 →</button></div>}</section>
 }
 
 type SudokuDifficulty = 'easy' | 'middle' | 'hard'
