@@ -1,4 +1,4 @@
-const CACHE = 'fly-time-v3'
+const CACHE = 'fly-time-v4'
 const APP_SHELL = ['/manifest.webmanifest', '/icon.svg']
 
 const getSameOriginAssets = (html) => [...html.matchAll(/(?:src|href)=["']([^"']+)["']/g)].flatMap((match) => {
@@ -42,8 +42,20 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        if (response.ok) {
+          const copy = response.clone()
+          caches.open(CACHE).then((cache) => cache.put('/', copy))
+        }
+        return response
+      }).catch(() => caches.match('/', { ignoreSearch: true })),
+    )
+    return
+  }
   event.respondWith(
-    caches.match(event.request, { ignoreSearch: event.request.mode === 'navigate' }).then((cached) => cached || fetch(event.request).then((response) => {
+    caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
       if (response.ok && new URL(event.request.url).origin === self.location.origin) {
         const copy = response.clone()
         caches.open(CACHE).then((cache) => cache.put(event.request, copy))

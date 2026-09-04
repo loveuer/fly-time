@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import type { CSSProperties, MouseEvent } from 'react'
 import { getGame, games, type GameId } from './src/data'
 import { getClues, getColumn, getNonogramPuzzle, isFilledCell, nonogramPuzzles } from './src/nonogram'
+import type { CardSuit, SavedCardSelection, SavedPlayingCard } from './src/sessions'
 import { useGameStore } from './src/store'
 
 type Screen = 'home' | 'library' | 'stats'
@@ -173,11 +174,15 @@ function around(index: number, size: number) {
 }
 
 function Minesweeper() {
-  const [difficulty, setDifficulty] = useState<MineDifficulty>('easy')
-  const [board, setBoard] = useState(() => makeMines(getMineConfig('easy').size, getMineConfig('easy').mines))
-  const [status, setStatus] = useState<'playing' | 'won' | 'lost'>('playing')
+  const savedSession = useGameStore((state) => state.minesweeper)
+  const saveMinesweeper = useGameStore((state) => state.saveMinesweeper)
+  const restoredDifficulty = savedSession && mineDifficultyOptions.some((option) => option.id === savedSession.difficulty) ? savedSession.difficulty as MineDifficulty : 'easy'
+  const restoredConfig = getMineConfig(restoredDifficulty)
+  const [difficulty, setDifficulty] = useState<MineDifficulty>(restoredDifficulty)
+  const [board, setBoard] = useState<MineCell[]>(() => savedSession?.board.length === restoredConfig.size * restoredConfig.size ? savedSession.board : makeMines(restoredConfig.size, restoredConfig.mines))
+  const [status, setStatus] = useState<'playing' | 'won' | 'lost'>(() => savedSession?.status ?? 'playing')
   const [flagMode, setFlagMode] = useState(false)
-  const [startedAt, setStartedAt] = useState(Date.now())
+  const [startedAt, setStartedAt] = useState(() => savedSession?.startedAt ?? Date.now())
   const [, setClock] = useState(0)
   const config = getMineConfig(difficulty)
   const size = config.size
@@ -189,6 +194,10 @@ function Minesweeper() {
     const timer = window.setInterval(() => setClock((value) => value + 1), 1000)
     return () => window.clearInterval(timer)
   }, [status])
+
+  useEffect(() => {
+    saveMinesweeper({ difficulty, board, status, startedAt })
+  }, [board, difficulty, saveMinesweeper, startedAt, status])
 
   const reset = (nextDifficulty: MineDifficulty = difficulty) => {
     const nextConfig = getMineConfig(nextDifficulty)
@@ -320,15 +329,23 @@ const createSudokuGame = (difficulty: SudokuDifficulty): SudokuGame => {
 }
 
 function Sudoku() {
-  const [difficulty, setDifficulty] = useState<SudokuDifficulty>('easy')
-  const [game, setGame] = useState<SudokuGame>(() => createSudokuGame('easy'))
-  const [board, setBoard] = useState<number[]>(() => [...game.puzzle])
-  const [notes, setNotes] = useState<number[][]>(() => Array.from({ length: 81 }, () => []))
-  const [selected, setSelected] = useState<number | null>(null)
-  const [mistakes, setMistakes] = useState(0)
-  const [wrongCells, setWrongCells] = useState<number[]>([])
-  const [complete, setComplete] = useState(false)
+  const savedSession = useGameStore((state) => state.sudoku)
+  const saveSudoku = useGameStore((state) => state.saveSudoku)
+  const restoredSession = savedSession && savedSession.puzzle.length === 81 && savedSession.solution.length === 81 && savedSession.board.length === 81 && savedSession.notes.length === 81 && savedSession.notes.every((items) => Array.isArray(items)) ? savedSession : null
+  const restoredDifficulty = restoredSession && sudokuDifficultyOptions.some((option) => option.id === restoredSession.difficulty) ? restoredSession.difficulty as SudokuDifficulty : 'easy'
+  const [difficulty, setDifficulty] = useState<SudokuDifficulty>(restoredDifficulty)
+  const [game, setGame] = useState<SudokuGame>(() => restoredSession ? { puzzle: [...restoredSession.puzzle], solution: [...restoredSession.solution] } : createSudokuGame(restoredDifficulty))
+  const [board, setBoard] = useState<number[]>(() => restoredSession ? [...restoredSession.board] : [...game.puzzle])
+  const [notes, setNotes] = useState<number[][]>(() => restoredSession ? restoredSession.notes.map((items) => [...items]) : Array.from({ length: 81 }, () => []))
+  const [selected, setSelected] = useState<number | null>(() => restoredSession?.selected ?? null)
+  const [mistakes, setMistakes] = useState(() => restoredSession?.mistakes ?? 0)
+  const [wrongCells, setWrongCells] = useState<number[]>(() => restoredSession?.wrongCells ?? [])
+  const [complete, setComplete] = useState(() => restoredSession?.complete ?? false)
   const [inputMode, setInputMode] = useState<'value' | 'note'>('value')
+
+  useEffect(() => {
+    saveSudoku({ difficulty, puzzle: game.puzzle, solution: game.solution, board, notes, selected, mistakes, wrongCells, complete })
+  }, [board, complete, difficulty, game, mistakes, notes, saveSudoku, selected, wrongCells])
 
   const reset = (nextDifficulty: SudokuDifficulty = difficulty) => {
     const nextGame = createSudokuGame(nextDifficulty)
@@ -442,9 +459,9 @@ function Nonogram() {
   return <section className="game-panel nonogram-panel"><div className="game-intro"><span className="section-kicker">NONOGRAM · {puzzle.name.toUpperCase()}</span><h1>从数字里，<em>拼出一幅小画。</em></h1><p>线索表示连续涂色格子的数量。每组数字之间至少隔一个空格。</p></div><div className="nonogram-puzzle-tabs">{nonogramPuzzles.map((item, index) => <button key={item.id} className={item.id === puzzle.id ? 'active' : ''} onClick={() => choosePuzzle(item.id)}><span>0{index + 1}</span>{item.name}</button>)}</div><div className="nonogram-meta"><span><b>{puzzle.hint}</b> · 入门题</span><span>{progress.completed ? '完成啦 ✦' : `用时 ${formatTime(progress.elapsed)}`}</span></div><div className="nonogram-board" style={{ '--nonogram-size': size } as CSSProperties}><div className="nonogram-corner">↘</div>{columnClues.map((clue, column) => <div className={`nonogram-col-clue ${isLineSolved(Array.from({ length: size }, (_, row) => row * size + column)) ? 'solved' : ''}`} key={`column-${column}`}>{clue.map((number, clueIndex) => <span key={`${number}-${clueIndex}`}>{number}</span>)}</div>)}{rowClues.map((clue, row) => <div className="nonogram-row-group" key={`row-${row}`}><div className={`nonogram-row-clue ${isLineSolved(Array.from({ length: size }, (_, column) => row * size + column)) ? 'solved' : ''}`}>{clue.map((number, clueIndex) => <span key={`${number}-${clueIndex}`}>{number}</span>)}</div>{puzzle.rows[row].split('').map((_, column) => { const index = row * size + column; const mark = cells[index]; return <button key={index} className={`nonogram-cell ${mark === 1 ? 'filled' : ''} ${mark === 2 ? 'cross' : ''} ${column === 2 || column === 5 ? 'block-right' : ''} ${row === 2 || row === 5 ? 'block-bottom' : ''}`} onClick={() => markCell(index)} aria-label={`第 ${row + 1} 行第 ${column + 1} 列`}>{mark === 1 ? '✦' : mark === 2 ? '×' : ''}</button> })}</div>)}</div><div className="mode-toggle nonogram-mode"><button className={mode === 'fill' ? 'selected' : ''} onClick={() => setMode('fill')}>✦ 涂色</button><button className={mode === 'cross' ? 'selected' : ''} onClick={() => setMode('cross')}>× 排除</button></div><div className="nonogram-tip"><span>?</span><p><strong>怎么玩？</strong>先看行列线索，推理哪些格子一定要涂。涂错不会结束游戏，但会记一次错误。</p></div><div className="game-actions"><button onClick={() => choosePuzzle(puzzle.id)}><Icon name="refresh" />重新开始</button><button onClick={nextPuzzle}>换一题 →</button></div>{progress.completed && <div className="result-banner mint-result"><strong>图案完成，原来是「{puzzle.name}」！</strong><button onClick={nextPuzzle}>下一题 →</button></div>}</section>
 }
 
-type Suit = '♠' | '♥' | '♦' | '♣'
-type PlayingCard = { id: string; rank: number; suit: Suit; faceUp: boolean }
-type SelectedCard = { source: 'tableau' | 'waste'; column: number; index: number }
+type Suit = CardSuit
+type PlayingCard = SavedPlayingCard
+type SelectedCard = SavedCardSelection
 const suits: Suit[] = ['♠', '♥', '♦', '♣']
 const rankNames = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
 const redSuits = new Set<Suit>(['♥', '♦'])
@@ -458,8 +475,28 @@ function makeSolitaire() {
 }
 
 function Solitaire() {
-  const [game, setGame] = useState(makeSolitaire)
-  const [selected, setSelected] = useState<SelectedCard | null>(null)
+  const savedSession = useGameStore((state) => state.solitaire)
+  const saveSolitaire = useGameStore((state) => state.saveSolitaire)
+  const [game, setGame] = useState<ReturnType<typeof makeSolitaire>>(() => {
+    if (!savedSession?.game || savedSession.game.tableau.length !== 7) return makeSolitaire()
+    return {
+      tableau: savedSession.game.tableau.map((pile) => pile.map((card) => ({ ...card }))),
+      stock: savedSession.game.stock.map((card) => ({ ...card })),
+      waste: savedSession.game.waste.map((card) => ({ ...card })),
+      foundations: {
+        '♠': savedSession.game.foundations['♠'].map((card) => ({ ...card })),
+        '♥': savedSession.game.foundations['♥'].map((card) => ({ ...card })),
+        '♦': savedSession.game.foundations['♦'].map((card) => ({ ...card })),
+        '♣': savedSession.game.foundations['♣'].map((card) => ({ ...card })),
+      },
+    }
+  })
+  const [selected, setSelected] = useState<SelectedCard | null>(() => savedSession?.selected ?? null)
+
+  useEffect(() => {
+    saveSolitaire({ game, selected })
+  }, [game, saveSolitaire, selected])
+
   const reset = () => { setGame(makeSolitaire()); setSelected(null) }
   const selectedCards = selected ? selected.source === 'waste' ? [game.waste.at(-1)] : game.tableau[selected.column].slice(selected.index) : []
   const canPlace = (card: PlayingCard | undefined, target: PlayingCard | undefined) => !card ? false : !target ? card.rank === 13 : target.faceUp && redSuits.has(card.suit) !== redSuits.has(target.suit) && card.rank === target.rank - 1
