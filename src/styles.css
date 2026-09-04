@@ -21,6 +21,7 @@ body { margin: 0; min-width: 320px; min-height: 100vh; background: radial-gradie
 button { border: 0; font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 button:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
 .app-shell { max-width: 520px; min-height: 100vh; margin: 0 auto; overflow: hidden; position: relative; background: linear-gradient(180deg, rgba(14, 22, 46, .62), rgba(8, 13, 27, .95) 70%); }
+.hydration-screen { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--muted); font-family: var(--mono); font-size: 10px; letter-spacing: .04em; }
 .main-content { padding: max(22px, env(safe-area-inset-top)) 22px calc(104px + env(safe-area-inset-bottom)); min-height: 100vh; }
 .icon { width: 20px; height: 20px; display: block; }
 .brand-header { height: 48px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 38px; }

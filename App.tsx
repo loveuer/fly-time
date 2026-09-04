@@ -22,14 +22,27 @@ const Icon = ({ name }: { name: 'home' | 'grid' | 'chart' | 'back' | 'info' | 's
 }
 
 function App() {
+  const [hydrated, setHydrated] = useState(() => useGameStore.persist.hasHydrated())
   const [screen, setScreen] = useState<Screen>('home')
   const [activeGame, setActiveGame] = useState<GameId | null>(null)
   const [showAbout, setShowAbout] = useState(false)
   const recordGame = useGameStore((state) => state.recordGame)
 
+  useEffect(() => {
+    if (useGameStore.persist.hasHydrated()) {
+      setHydrated(true)
+      return
+    }
+    return useGameStore.persist.onFinishHydration(() => setHydrated(true))
+  }, [])
+
   const openGame = (id: GameId) => {
     setActiveGame(id)
     recordGame(id, 0)
+  }
+
+  if (!hydrated) {
+    return <div className="hydration-screen"><span className="brand-mark">✦</span><span>正在恢复旅程…</span></div>
   }
 
   if (activeGame) {
