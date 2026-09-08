@@ -352,8 +352,6 @@ function Sudoku() {
   const [notes, setNotes] = useState<number[][]>(() => restoredSession ? restoredSession.notes.map((items) => [...items]) : Array.from({ length: 81 }, () => []))
   const [selected, setSelected] = useState<number | null>(() => restoredSession?.selected ?? null)
   const [elapsed, setElapsed] = useState(() => typeof restoredSession?.elapsed === 'number' ? restoredSession.elapsed : 0)
-  const [mistakes, setMistakes] = useState(() => restoredSession?.mistakes ?? 0)
-  const [wrongCells, setWrongCells] = useState<number[]>(() => restoredSession?.wrongCells ?? [])
   const [complete, setComplete] = useState(() => restoredSession?.complete ?? false)
   const [inputMode, setInputMode] = useState<'value' | 'note'>('value')
 
@@ -364,8 +362,8 @@ function Sudoku() {
   }, [complete])
 
   useEffect(() => {
-    saveSudoku({ difficulty, puzzle: game.puzzle, solution: game.solution, board, notes, selected, elapsed, mistakes, wrongCells, complete })
-  }, [board, complete, difficulty, elapsed, game, mistakes, notes, saveSudoku, selected, wrongCells])
+    saveSudoku({ difficulty, puzzle: game.puzzle, solution: game.solution, board, notes, selected, elapsed, complete })
+  }, [board, complete, difficulty, elapsed, game, notes, saveSudoku, selected])
 
   const reset = (nextDifficulty: SudokuDifficulty = difficulty) => {
     const nextGame = createSudokuGame(nextDifficulty)
@@ -375,26 +373,11 @@ function Sudoku() {
     setNotes(Array.from({ length: 81 }, () => []))
     setSelected(null)
     setElapsed(0)
-    setMistakes(0)
-    setWrongCells([])
     setComplete(false)
     setInputMode('value')
   }
   const updateBoard = (next: number[]) => {
-    const isFull = next.every((value) => value !== 0)
-    if (isFull) {
-      const incorrect = next.reduce<number[]>((cells, value, index) => {
-        if (value !== game.solution[index]) cells.push(index)
-        return cells
-      }, [])
-      setWrongCells(incorrect)
-      setMistakes(incorrect.length)
-      setComplete(incorrect.length === 0)
-    } else {
-      setWrongCells([])
-      setMistakes(0)
-      setComplete(false)
-    }
+    setComplete(next.every((value, index) => value === game.solution[index]))
     setBoard(next)
   }
   const setNumber = (number: number) => {
@@ -427,7 +410,7 @@ function Sudoku() {
     updateBoard(next)
   }
 
-  return <section className="game-panel sudoku-panel"><div className="game-intro"><span className="section-kicker">SUDOKU · {difficulty.toUpperCase()}</span><h1>给数字，<em>一点秩序。</em></h1><p>每次开始都会随机生成一题，候选数字可以帮你记下暂时的推理。</p></div><div className="sudoku-difficulty">{sudokuDifficultyOptions.map((option) => <button key={option.id} className={difficulty === option.id ? 'active' : ''} onClick={() => reset(option.id)}><strong>{option.label}</strong><small>{option.id}</small></button>)}</div><div className="sudoku-meta"><span>用时 {formatTime(elapsed)} · 错误格 <b>{mistakes}</b></span><span className={complete ? 'complete-label' : ''}>{complete ? '完成啦 ✦' : wrongCells.length ? `已填满 · 有 ${wrongCells.length} 格待修正` : `随机唯一解 · 还剩 ${board.filter((value) => value === 0).length} 格`}</span></div><div className="sudoku-board">{board.map((value, index) => <button key={index} className={`sudoku-cell ${game.puzzle[index] ? 'given' : 'editable'} ${selected === index ? 'selected' : ''} ${activeNumber && value === activeNumber ? 'same-number' : ''} ${wrongCells.includes(index) ? 'wrong' : ''} ${Math.floor(index / 9) % 3 === 2 ? 'block-bottom' : ''} ${index % 9 % 3 === 2 ? 'block-right' : ''}`} onClick={() => setSelected(index)}>{value ? value : notes[index].length > 0 ? <span className="candidate-grid">{[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => <span key={number}>{notes[index].includes(number) ? number : ''}</span>)}</span> : ''}</button>)}</div><div className="mode-toggle sudoku-mode"><button className={inputMode === 'value' ? 'selected' : ''} onClick={() => setInputMode('value')}>● 确定答案</button><button className={inputMode === 'note' ? 'selected' : ''} onClick={() => setInputMode('note')}>⁙ 候选数字 <small>{selectedNotes.length}/4</small></button></div><div className="number-pad">{[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => <button key={number} className={(inputMode === 'value' && activeNumber === number) || (inputMode === 'note' && selectedNotes.includes(number)) ? 'active' : ''} onClick={() => setNumber(number)}>{number}</button>)}<button className="erase" onClick={eraseSelected}>⌫</button></div><div className="game-actions"><button onClick={() => reset()}><Icon name="refresh" />随机新题</button><span>{inputMode === 'note' ? '每格最多保留 4 个候选数字' : '填满后自动验证'}</span></div>{wrongCells.length > 0 && !complete && <div className="sudoku-warning"><strong>再检查一下，有 {wrongCells.length} 格不太对。</strong><span>红色格子需要改正</span></div>}{complete && <div className="result-banner mint-result"><strong>一格不差，落地前刚好完成。</strong><button onClick={() => reset()}>再来一盘 →</button></div>}</section>
+  return <section className="game-panel sudoku-panel"><div className="game-intro"><span className="section-kicker">SUDOKU · {difficulty.toUpperCase()}</span><h1>给数字，<em>一点秩序。</em></h1><p>每次开始都会随机生成一题，候选数字可以帮你记下暂时的推理。</p></div><div className="sudoku-difficulty">{sudokuDifficultyOptions.map((option) => <button key={option.id} className={difficulty === option.id ? 'active' : ''} onClick={() => reset(option.id)}><strong>{option.label}</strong><small>{option.id}</small></button>)}</div><div className="sudoku-meta"><span>用时 {formatTime(elapsed)}</span><span className={complete ? 'complete-label' : ''}>{complete ? '完成啦 ✦' : `随机唯一解 · 还剩 ${board.filter((value) => value === 0).length} 格`}</span></div><div className="sudoku-board">{board.map((value, index) => <button key={index} className={`sudoku-cell ${game.puzzle[index] ? 'given' : 'editable'} ${selected === index ? 'selected' : ''} ${activeNumber && value === activeNumber ? 'same-number' : ''} ${Math.floor(index / 9) % 3 === 2 ? 'block-bottom' : ''} ${index % 9 % 3 === 2 ? 'block-right' : ''}`} onClick={() => setSelected(index)}>{value ? value : notes[index].length > 0 ? <span className="candidate-grid">{[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => <span key={number}>{notes[index].includes(number) ? number : ''}</span>)}</span> : ''}</button>)}</div><div className="mode-toggle sudoku-mode"><button className={inputMode === 'value' ? 'selected' : ''} onClick={() => setInputMode('value')}>● 确定答案</button><button className={inputMode === 'note' ? 'selected' : ''} onClick={() => setInputMode('note')}>⁙ 候选数字 <small>{selectedNotes.length}/4</small></button></div><div className="number-pad">{[1, 2, 3, 4, 5, 6, 7, 8, 9].map((number) => <button key={number} className={(inputMode === 'value' && activeNumber === number) || (inputMode === 'note' && selectedNotes.includes(number)) ? 'active' : ''} onClick={() => setNumber(number)}>{number}</button>)}<button className="erase" onClick={eraseSelected}>⌫</button></div><div className="game-actions"><button onClick={() => reset()}><Icon name="refresh" />随机新题</button><span>{inputMode === 'note' ? '每格最多保留 4 个候选数字' : '填满后自动完成'}</span></div>{complete && <div className="result-banner mint-result"><strong>一格不差，落地前刚好完成。</strong><button onClick={() => reset()}>再来一盘 →</button></div>}</section>
 }
 function Nonogram() {
   const progress = useGameStore((state) => state.nonogram)
