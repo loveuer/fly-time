@@ -21,6 +21,7 @@ export type SavedSudokuSession = {
   board: number[]
   notes: number[][]
   selected: number | null
+  elapsed: number
   mistakes: number
   wrongCells: number[]
   complete: boolean
