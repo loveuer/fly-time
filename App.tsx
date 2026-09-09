@@ -90,7 +90,7 @@ function Home({ onOpen, onAbout }: { onOpen: (id: GameId) => void; onAbout: () =
       <div className="flight-path"><span /><i /><i /><i /><b>✈</b></div>
     </section>
     <section className="section-heading"><div><span className="section-kicker">JUST FOR YOU</span><h2>现在想玩什么？</h2></div><span className="tiny-caption">{games.length} 款游戏</span></section>
-    <div className="game-grid home-grid">{games.map((game, index) => <GameCard key={game.id} game={game} featured={index === 0} onOpen={onOpen} />)}</div>
+    <div className="game-grid home-grid">{games.map((game) => <GameCard key={game.id} game={game} onOpen={onOpen} />)}</div>
     <section className="section-heading recent-heading"><div><span className="section-kicker">YOUR JOURNEY</span><h2>最近玩过</h2></div><button className="text-button" onClick={() => onOpen(recentGames[0]?.id || 'minesweeper')}>继续 <span>→</span></button></section>
     {recentGames.length > 0 && <div className="recent-row">{recentGames.slice(0, 2).map((game) => <button className="recent-item" key={game.id} onClick={() => onOpen(game.id)}><span className={`recent-icon ${game.color}`}>{game.icon}</span><span><strong>{game.title}</strong><small>{game.subtitle}</small></span><span className="recent-arrow">↗</span></button>)}</div>}
     <div className="daily-note"><span>☼</span><div><strong>今日小提示</strong><p>专注 10 分钟，窗外的云会更好看。</p></div></div>
@@ -98,10 +98,10 @@ function Home({ onOpen, onAbout }: { onOpen: (id: GameId) => void; onAbout: () =
   </>
 }
 
-function GameCard({ game, featured, onOpen }: { game: ReturnType<typeof getGame>; featured?: boolean; onOpen: (id: GameId) => void }) {
+function GameCard({ game, onOpen }: { game: ReturnType<typeof getGame>; onOpen: (id: GameId) => void }) {
   const favorite = useGameStore((state) => state.favorites.includes(game.id))
   const toggleFavorite = useGameStore((state) => state.toggleFavorite)
-  return <article className={`game-card ${game.color} ${featured ? 'featured' : ''}`}>
+  return <article className={`game-card ${game.color}`}>
     <div className="card-top"><span className="card-icon">{game.icon}</span><button className={`favorite-button ${favorite ? 'is-favorite' : ''}`} onClick={() => toggleFavorite(game.id)} aria-label="收藏"><Icon name="star" /></button></div>
     <div className="card-copy"><span className="card-category">{game.category}</span><h3>{game.title}</h3><p>{game.description}</p></div>
     <button className="play-button" onClick={() => onOpen(game.id)}><span>开始游戏</span><span>↗</span></button>
