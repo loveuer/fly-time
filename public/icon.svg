@@ -1,8 +1,27 @@
-<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="192" height="192" rx="48" fill="#151F3D"/>
-  <circle cx="145" cy="44" r="25" fill="#FFD166"/>
-  <path d="M43 126.5C61.5 106 87.7 90.1 128.7 77.2C135.8 74.9 142.6 81.6 139.9 88.6C124.4 128.4 103.8 151.9 78.7 157.7C68.9 160 59.5 154.6 55.7 145.3L43 126.5Z" fill="#F2F6FF"/>
-  <path d="M42.5 126.8L86 121L127.5 77.5" stroke="#6E7FFF" stroke-width="8" stroke-linecap="round"/>
-  <path d="M86.2 121.1L103.8 141.4" stroke="#6E7FFF" stroke-width="8" stroke-linecap="round"/>
-  <path d="M42.5 126.8L65.6 115.9" stroke="#6E7FFF" stroke-width="8" stroke-linecap="round"/>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="54" y1="38" x2="465" y2="483" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1B2A58"/>
+      <stop offset="1" stop-color="#080D1B"/>
+    </linearGradient>
+    <linearGradient id="trail" x1="92" y1="405" x2="390" y2="119" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7185FF" stop-opacity="0"/>
+      <stop offset=".3" stop-color="#7185FF"/>
+      <stop offset="1" stop-color="#BFCBFF"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="512" height="512" fill="#080D1B"/>
+  <rect x="34" y="34" width="444" height="444" rx="128" fill="url(#sky)"/>
+  <circle cx="379" cy="132" r="62" fill="#FFD166"/>
+  <circle cx="379" cy="132" r="35" fill="#FFE09A" opacity=".65"/>
+  <path d="M94 399C128 297 205 244 289 218C347 200 378 158 401 108" stroke="url(#trail)" stroke-width="16" stroke-linecap="round"/>
+  <path d="M125 379C141 335 163 304 192 280" stroke="#7185FF" stroke-width="6" stroke-linecap="round" stroke-dasharray="2 19"/>
+  <path d="M368 148L177 251L249 280L273 372L307 298L372 272L368 148Z" fill="#F4F7FF"/>
+  <path d="M177 251L368 148L273 372L267 276L177 251Z" fill="#AFC0FF"/>
+  <path d="M249 280L368 148L307 298" stroke="#536DD6" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M109 159L118 184L143 193L118 202L109 227L100 202L75 193L100 184L109 159Z" fill="#FFD166" filter="url(#glow)"/>
 </svg>

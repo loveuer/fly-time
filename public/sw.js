@@ -1,4 +1,4 @@
-const CACHE = 'fly-time-v6'
+const CACHE = 'fly-time-v7'
 const APP_SHELL = ['/manifest.webmanifest', '/icon.svg']
 
 const getSameOriginAssets = (html) => [...html.matchAll(/(?:src|href)=["']([^"']+)["']/g)].flatMap((match) => {
