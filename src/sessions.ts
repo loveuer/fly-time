@@ -49,3 +49,18 @@ export type SavedSolitaireSession = {
   game: SavedSolitaireGame
   selected: SavedCardSelection | null
 }
+
+export type SavedBaggageSnapshot = {
+  inputIndex: number
+  stack: string[]
+  queue: string[]
+  output: string[]
+  status: 'playing' | 'won'
+}
+
+export type SavedBaggageSession = SavedBaggageSnapshot & {
+  difficulty: string
+  source: string[]
+  target: string[]
+  history: SavedBaggageSnapshot[]
+}

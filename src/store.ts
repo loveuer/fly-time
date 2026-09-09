@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { GameId } from './data'
-import type { SavedMinesweeperSession, SavedSolitaireSession, SavedSudokuSession } from './sessions'
+import type { SavedBaggageSession, SavedMinesweeperSession, SavedSolitaireSession, SavedSudokuSession } from './sessions'
 
 type Stats = {
   gamesPlayed: number
@@ -25,6 +25,7 @@ type Store = {
   minesweeper: SavedMinesweeperSession | null
   sudoku: SavedSudokuSession | null
   solitaire: SavedSolitaireSession | null
+  baggage: SavedBaggageSession | null
   toggleFavorite: (id: GameId) => void
   recordGame: (id: GameId, minutes?: number) => void
   setNonogramProgress: (progress: Partial<NonogramProgress>) => void
@@ -32,6 +33,7 @@ type Store = {
   saveMinesweeper: (session: SavedMinesweeperSession) => void
   saveSudoku: (session: SavedSudokuSession) => void
   saveSolitaire: (session: SavedSolitaireSession) => void
+  saveBaggage: (session: SavedBaggageSession) => void
 }
 
 export const useGameStore = create<Store>()(
@@ -44,6 +46,7 @@ export const useGameStore = create<Store>()(
       minesweeper: null,
       sudoku: null,
       solitaire: null,
+      baggage: null,
       toggleFavorite: (id) => set((state) => ({
         favorites: state.favorites.includes(id)
           ? state.favorites.filter((gameId) => gameId !== id)
@@ -66,6 +69,7 @@ export const useGameStore = create<Store>()(
       saveMinesweeper: (session) => set({ minesweeper: session }),
       saveSudoku: (session) => set({ sudoku: session }),
       saveSolitaire: (session) => set({ solitaire: session }),
+      saveBaggage: (session) => set({ baggage: session }),
     }),
     { name: 'fly-time-storage', storage: createJSONStorage(() => localStorage) },
   ),
